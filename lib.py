@@ -1,4 +1,4 @@
-import numpy as np
+
 
 from fodder import Fodder, Animal
 
