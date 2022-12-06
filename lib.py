@@ -1,11 +1,12 @@
-
-
-from fodder import Fodder, Animal
+from fodder import *
+import pandas as pd
 
 # ilość zwierząt
 rabbits = Animal(number=8, protein_need=30, fat_need=20, carbohydrates_need=40)
 dogs = Animal(number=10, protein_need=120, fat_need=100, carbohydrates_need=110)
 cats = Animal(number=12, protein_need=60, fat_need=90, carbohydrates_need=110)
+frogs = Animal(number=6, protein_need=20, fat_need=10, carbohydrates_need=35)
+gecko = Animal(number=9, protein_need=10, fat_need=5, carbohydrates_need=20)
 
 # koszty karmy w zależności od dnia
 price1 = {1: 20, 2: 15, 3: 22, 4: 26, 5: 26, 6: 25, 7: 18, 8: 21,
@@ -27,3 +28,8 @@ price3 = {1: 18, 2: 16, 3: 17, 4: 26, 5: 26, 6: 27, 7: 20, 8: 28,
 fodder1 = Fodder(protein=15, fat=10, carbohydrates=30, price=price1)
 fodder2 = Fodder(protein=40, fat=20, carbohydrates=15, price=price2)
 fodder3 = Fodder(protein=25, fat=45, carbohydrates=20, price=price3)
+
+# pojemność magazynu do składowania karmy, ogólna pojemność to 30kg i następnie po 10kg na rodzaj karmy
+space = Warehouse(space=30, fodder1_space=10, fodder2_space=10, fodder3_space=10)
+
+
