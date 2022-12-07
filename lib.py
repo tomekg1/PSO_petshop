@@ -1,5 +1,6 @@
 from fodder import *
 import pandas as pd
+import numpy as np
 
 # ilość zwierząt
 rabbits = Animal(number=8, protein_need=30, fat_need=20, carbohydrates_need=40)
@@ -7,6 +8,8 @@ dogs = Animal(number=10, protein_need=120, fat_need=100, carbohydrates_need=110)
 cats = Animal(number=12, protein_need=60, fat_need=90, carbohydrates_need=110)
 frogs = Animal(number=6, protein_need=20, fat_need=10, carbohydrates_need=35)
 gecko = Animal(number=9, protein_need=10, fat_need=5, carbohydrates_need=20)
+
+animals = [rabbits, dogs, cats, frogs, gecko]
 
 # koszty karmy w zależności od dnia
 price1 = {1: 20, 2: 15, 3: 22, 4: 26, 5: 26, 6: 25, 7: 18, 8: 21,
@@ -31,5 +34,20 @@ fodder3 = Fodder(protein=25, fat=45, carbohydrates=20, price=price3)
 
 # pojemność magazynu do składowania karmy, ogólna pojemność to 30kg i następnie po 10kg na rodzaj karmy
 space = Warehouse(space=30, fodder1_space=10, fodder2_space=10, fodder3_space=10)
+
+# minimalne makroskladniki potrzebne ndziennie
+
+macro_need_per_day = 0
+for i in animals:
+    macro_need_per_day = np.add(macro_need_per_day, i.get_macro_need())
+
+# funkcja celu
+# wszystkie możliwości, żeby x * f1 + y * f2 + z * f3 >= macro_need_per_day
+
+def f_c(f1, f2, f3, day):
+    return f1.price[day], f2.price[day],  f3.price[day]
+
+
+
 
 
