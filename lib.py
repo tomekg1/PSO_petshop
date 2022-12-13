@@ -38,8 +38,6 @@ price5 = {1: 10, 2: 15, 3: 10, 4: 15, 5: 12, 6: 11, 7: 15, 8: 11,
           16: 18, 17: 17, 18: 12, 19: 10, 20: 18, 21: 12, 22: 16,
           23: 15, 24: 13, 25: 18, 26: 19, 27: 10, 28: 11, 29: 11, 30: 16}
 
-
-
 # rodzaje karmy
 fodder1 = Fodder(protein=15, fat=10, carbohydrates=30, price=price1)
 fodder2 = Fodder(protein=40, fat=20, carbohydrates=15, price=price2)
@@ -104,6 +102,7 @@ def create_random_solution():
 
 random_solution = create_random_solution()
 print(random_solution)
+print(len(random_solution))
 
 
 # funkcja celu - argumentem jest rozwiązanie
@@ -142,7 +141,103 @@ def check_penalty(solution):
     return 0
 
 
+# kara za jeden dzien
+def check_macro_penalty(f1, f2, f3, f4, f5):
+    penalty_price = 1000
+    protein = fodders[0].protein * f1 + fodders[1].protein * f2 + fodders[2].protein * f3 + fodders[3].protein * f4 + \
+              fodders[4].protein * f5
+    fat = fodders[0].fat * f1 + fodders[1].fat * f2 + fodders[2].fat * f3 + fodders[3].fat * f4 + \
+          fodders[4].fat * f5
+    carbo = fodders[0].carbohydrates * f1 + fodders[1].carbohydrates * f2 + fodders[2].carbohydrates * f3 + \
+            fodders[3].carbohydrates * f4 + fodders[4].carbohydrates * f5
+    if protein < protein_need_per_day or fat < fat_need_per_day or carbo < carbo_need_per_day:
+        return penalty_price
+    return 0
+
+
+# jako sąsiedztwo przyjmiemy
+
+
+# funkcja celu dla kazdego dnia
+
+
+def daily_cost(f1, f2, f3, f4, f5, day):
+    return fodder1.price[day] * f1 + fodder2.price[day] * f2 + fodder3.price[day] * f3 + fodder4.price[day] * f4 + \
+           fodder5.price[day] * f5 + check_macro_penalty(f1, f2, f3, f4, f5)
+
+
+print(daily_cost(1, 1, 1, 1, 1, 1))
+
+
+# PSO - bedziemy minimalizowac ilosc kupionej karmy w kazdym dniu po kolei
+
+def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=0.1):
+    # Initialise new velocity array
+    num_particle = len(particle)
+    new_velocity = np.array([0.0 for i in range(num_particle)])
+    # Randomly generate r1, r2 and inertia weight from normal distribution
+    r1 = random.uniform(0, w_max)
+    r2 = random.uniform(0, w_max)
+    w = random.uniform(w_min, w_max)
+    c1 = c
+    c2 = c
+    # Calculate new velocity
+    for i in range(num_particle):
+        new_velocity[i] = w * velocity[i] + c1 * r1 * (pbest[i] - particle[i]) + c2 * r2 * (gbest[i] - particle[i])
+    return new_velocity
+
+
+def update_position(particle, velocity):
+    # Move particles by adding velocity
+    new_particle = (particle + velocity)
+    return new_particle
+
+
+def pso(population, dimension, position_min, position_max, generation, fitness_criterion):
+    # Initialisation
+    # Population
+    day = 1
+    for i in range(len(random_solution)):
+        particles = [[int(random.uniform(position_min, position_max)) for j in range(dimension)] for i in
+                     range(population)]
+        # Particle's best position
+        pbest_position = particles
+        # Fitness
+        pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+        # Index of the best particle
+        gbest_index = np.argmin(pbest_fitness)
+        # Global best particle position
+        gbest_position = pbest_position[gbest_index]
+        # Velocity (starting from 0 speed)
+        velocity = [[0 for j in range(dimension)] for i in range(population)]
+        # Loop for the number of generation
+        for t in range(generation):
+            # Stop if the average fitness value reached a predefined success criterion
+            if np.average(pbest_fitness) <= fitness_criterion:
+                break
+            else:
+                for n in range(population):
+                    # Update the velocity of each particle
+                    velocity[n] = update_velocity(particles[n], velocity[n], pbest_position[n], gbest_position)
+                    # Move the particles to new position
+                    particles[n] = update_position(particles[n], velocity[n])
+            # Calculate the fitness value
+            pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+            # Find the index of the best particle
+            gbest_index = np.argmin(pbest_fitness)
+            # Update the position of the best particle
+            gbest_position = pbest_position[gbest_index]
+        print(particles)
+        day += 1
+
+        # for i in range(len(solution)) zmiany w postaci zmiana ilosci karm w jednym dniu - gdy dojdziemy do
+        # optymalnej wartosci to idziemy do kolejnego minimalizacja funkcji celu - funkcja celu powinna zwracac nam
+        # koszt w pojedynczych dniach
+        # TODO: zabronić particles przechodzenia w wartości ujemne, zmienić typ na int bo to ilość karmy albo po prostu
+        #  ostateczne rozwiazanie zaokrąglić
+
+
 total_cost += check_penalty(random_solution)
 print(total_cost)
 
-
+pso(20, 5, 10, 80, 50, 100)

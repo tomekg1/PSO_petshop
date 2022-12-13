@@ -52,25 +52,5 @@ class StorageCost:
         return cost
 
 
-# ilość kupionej karmy
-class FodderPurchaseAmount:
-    def __int__(self, fodder1_amount: int, fodder2_amount: int, fodder3_amount):
-        self.fodder1_amount = fodder1_amount
-        self.fodder2_amount = fodder2_amount
-        self.fodder3_amount = fodder3_amount
-
-
-# koszt kupienia karmy
-class FodderPurchaseCost(FodderPurchaseAmount):
-    def __int__(self, fodder1_cost: float, fodder2_cost: float, fodder3_cost: float):
-        self.fodder1_cost = fodder1_cost
-        self.fodder2_cost = fodder2_cost
-        self.fodder3_cost = fodder3_cost
-        FodderPurchaseAmount.__init__(self)
-
-    def compute_fodder_purchase_cost(self):
-        purchase_cost = self.fodder1_cost * self.fodder1_amount + self.fodder2_cost * self.fodder2_amount + self.fodder3_cost * self.fodder3_amount
-        return purchase_cost
-
 
 
