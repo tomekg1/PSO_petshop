@@ -60,6 +60,7 @@ protein_need_per_day = macro_need_per_day[0]
 fat_need_per_day = macro_need_per_day[1]
 carbo_need_per_day = macro_need_per_day[2]
 
+#print(macro_need_per_day)
 # generowanie losowego rozwiązania
 
 
@@ -101,8 +102,8 @@ def create_random_solution():
 
 
 random_solution = create_random_solution()
-print(random_solution)
-print(len(random_solution))
+#print(random_solution)
+#print(len(random_solution))
 
 
 # funkcja celu - argumentem jest rozwiązanie
@@ -121,7 +122,7 @@ def compute_total_cost(solution):
 
 
 total_cost = compute_total_cost(random_solution)
-print(total_cost)
+#print(total_cost)
 
 
 # sprawdzanie czy w każdym dniu zapewniliśmy minimum zapotrzebowania - jeśli nie nakładamy karę do kosztu całkowitego
@@ -143,7 +144,9 @@ def check_penalty(solution):
 
 # kara za jeden dzien
 def check_macro_penalty(f1, f2, f3, f4, f5):
-    penalty_price = 1000
+    penalty_price = float('inf')
+    if f1 < 0 or f2 < 0 or f3 < 0 or f4 < 0 or f5 < 0:
+        return penalty_price
     protein = fodders[0].protein * f1 + fodders[1].protein * f2 + fodders[2].protein * f3 + fodders[3].protein * f4 + \
               fodders[4].protein * f5
     fat = fodders[0].fat * f1 + fodders[1].fat * f2 + fodders[2].fat * f3 + fodders[3].fat * f4 + \
@@ -166,19 +169,19 @@ def daily_cost(f1, f2, f3, f4, f5, day):
            fodder5.price[day] * f5 + check_macro_penalty(f1, f2, f3, f4, f5)
 
 
-print(daily_cost(1, 1, 1, 1, 1, 1))
+#print(daily_cost(1, 1, 1, 1, 1, 1))
 
 
 # PSO - bedziemy minimalizowac ilosc kupionej karmy w kazdym dniu po kolei
 
-def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=0.1):
+def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=0.9):
     # Initialise new velocity array
     num_particle = len(particle)
     new_velocity = np.array([0.0 for i in range(num_particle)])
     # Randomly generate r1, r2 and inertia weight from normal distribution
-    r1 = random.uniform(0, w_max)
-    r2 = random.uniform(0, w_max)
-    w = random.uniform(w_min, w_max)
+    r1 = random.uniform(0.1, w_max)
+    r2 = random.uniform(0.1, w_max)
+    w = random.uniform(w_min, 0.1)
     c1 = c
     c2 = c
     # Calculate new velocity
@@ -193,12 +196,15 @@ def update_position(particle, velocity):
     return new_particle
 
 
-def pso(population, dimension, position_min, position_max, generation, fitness_criterion):
-    # Initialisation
-    # Population
+# population - ilosc cząstek
+# dimension - wymiar problemu tutaj 5
+# position_min, position_max - pozycja startowa cząsteczek
+# generation - liczba updateów
+def pso(population, dimension, position_min, position_max, generation, fitness_criterion, random_solution):
     day = 1
+    solution = []
     for i in range(len(random_solution)):
-        particles = [[int(random.uniform(position_min, position_max)) for j in range(dimension)] for i in
+        particles = [[random.randint(position_min, position_max) for j in range(dimension)] for w in
                      range(population)]
         # Particle's best position
         pbest_position = particles
@@ -227,17 +233,16 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
             gbest_index = np.argmin(pbest_fitness)
             # Update the position of the best particle
             gbest_position = pbest_position[gbest_index]
-        print(particles)
+        ceil_particles = (np.ceil(particles)).astype(int)
+        # print(ceil_particles[-1])  # ostateczne rozwiazanie (ilosc karmy zakupionej w danych dniach)
+        solution.append(ceil_particles[-1])
         day += 1
+    return solution
 
-        # for i in range(len(solution)) zmiany w postaci zmiana ilosci karm w jednym dniu - gdy dojdziemy do
-        # optymalnej wartosci to idziemy do kolejnego minimalizacja funkcji celu - funkcja celu powinna zwracac nam
-        # koszt w pojedynczych dniach
-        # TODO: zabronić particles przechodzenia w wartości ujemne, zmienić typ na int bo to ilość karmy albo po prostu
-        #  ostateczne rozwiazanie zaokrąglić
+
 
 
 total_cost += check_penalty(random_solution)
-print(total_cost)
+#print(total_cost)
 
-pso(20, 5, 10, 80, 50, 100)
+#pso(20, 5, 10, 80, 200, 0.001, random_solution)
