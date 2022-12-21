@@ -60,7 +60,7 @@ protein_need_per_day = macro_need_per_day[0]
 fat_need_per_day = macro_need_per_day[1]
 carbo_need_per_day = macro_need_per_day[2]
 
-#print(macro_need_per_day)
+# print(macro_need_per_day)
 # generowanie losowego rozwiązania
 
 
@@ -102,8 +102,10 @@ def create_random_solution():
 
 
 random_solution = create_random_solution()
-#print(random_solution)
-#print(len(random_solution))
+
+
+# print(random_solution)
+# print(len(random_solution))
 
 
 # funkcja celu - argumentem jest rozwiązanie
@@ -122,7 +124,9 @@ def compute_total_cost(solution):
 
 
 total_cost = compute_total_cost(random_solution)
-#print(total_cost)
+
+
+# print(total_cost)
 
 
 # sprawdzanie czy w każdym dniu zapewniliśmy minimum zapotrzebowania - jeśli nie nakładamy karę do kosztu całkowitego
@@ -169,7 +173,7 @@ def daily_cost(f1, f2, f3, f4, f5, day):
            fodder5.price[day] * f5 + check_macro_penalty(f1, f2, f3, f4, f5)
 
 
-#print(daily_cost(1, 1, 1, 1, 1, 1))
+# print(daily_cost(1, 1, 1, 1, 1, 1))
 
 
 # PSO - bedziemy minimalizowac ilosc kupionej karmy w kazdym dniu po kolei
@@ -203,12 +207,15 @@ def update_position(particle, velocity):
 def pso(population, dimension, position_min, position_max, generation, fitness_criterion, random_solution):
     day = 1
     solution = []
+    # przechodzenie czastek w dniach
+    day_particle_change = []
     for i in range(len(random_solution)):
         particles = [[random.randint(position_min, position_max) for j in range(dimension)] for w in
                      range(population)]
-        # Particle's best position
+        particles[0] = random_solution[i]
+        # Particle's best position - najlepsze polozenia czasteczek
         pbest_position = particles
-        # Fitness
+        # Fitness - najlepszy koszt polozenia danej czasteczki
         pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
         # Index of the best particle
         gbest_index = np.argmin(pbest_fitness)
@@ -217,6 +224,9 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
         # Velocity (starting from 0 speed)
         velocity = [[0 for j in range(dimension)] for i in range(population)]
         # Loop for the number of generation
+
+        # przechodzenie czastek w iteracjach
+        iter_particle = []
         for t in range(generation):
             # Stop if the average fitness value reached a predefined success criterion
             if np.average(pbest_fitness) <= fitness_criterion:
@@ -233,16 +243,18 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
             gbest_index = np.argmin(pbest_fitness)
             # Update the position of the best particle
             gbest_position = pbest_position[gbest_index]
+
+            # zapamietuje wszystkie ruchy czasteczki pochodzacej od rozwiazania losowego
+            iter_particle.append(particles[0])
+        day_particle_change.append(iter_particle)
         ceil_particles = (np.ceil(particles)).astype(int)
         # print(ceil_particles[-1])  # ostateczne rozwiazanie (ilosc karmy zakupionej w danych dniach)
         solution.append(ceil_particles[-1])
         day += 1
-    return solution
-
-
+    return solution, day_particle_change
 
 
 total_cost += check_penalty(random_solution)
-#print(total_cost)
+# print(total_cost)
 
-#pso(20, 5, 10, 80, 200, 0.001, random_solution)
+# pso(20, 5, 10, 80, 200, 0.001, random_solution)
