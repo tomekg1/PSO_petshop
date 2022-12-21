@@ -178,20 +178,30 @@ def daily_cost(f1, f2, f3, f4, f5, day):
 
 # PSO - bedziemy minimalizowac ilosc kupionej karmy w kazdym dniu po kolei
 
-def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=0.9):
+def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=1):
     # Initialise new velocity array
     num_particle = len(particle)
     new_velocity = np.array([0.0 for i in range(num_particle)])
     # Randomly generate r1, r2 and inertia weight from normal distribution
     r1 = random.uniform(0.1, w_max)
     r2 = random.uniform(0.1, w_max)
-    w = random.uniform(w_min, 0.1)
+    w = random.uniform(0.1, 0.5)
     c1 = c
     c2 = c
     # Calculate new velocity
     for i in range(num_particle):
         new_velocity[i] = w * velocity[i] + c1 * r1 * (pbest[i] - particle[i]) + c2 * r2 * (gbest[i] - particle[i])
     return new_velocity
+
+
+def update_position_hamming(particle, velocity, gbest_position):
+    # Move particles by adding velocity
+    new_particle = (particle + velocity)
+    distance = [0, 0, 0, 0, 0]
+    for i in range(len(new_particle)):
+        if new_particle[i] != gbest_position[i]:
+            distance[i] = np.abs(new_particle[i] - gbest_position[i])
+    return new_particle, distance
 
 
 def update_position(particle, velocity):
@@ -204,7 +214,7 @@ def update_position(particle, velocity):
 # dimension - wymiar problemu tutaj 5
 # position_min, position_max - pozycja startowa cząsteczek
 # generation - liczba updateów
-def pso(population, dimension, position_min, position_max, generation, fitness_criterion, random_solution):
+def pso(population, dimension, position_min, position_max, generation, fitness_criterion, random_solution, hamming=0):
     day = 1
     solution = []
     # przechodzenie czastek w dniach
@@ -232,20 +242,47 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
             if np.average(pbest_fitness) <= fitness_criterion:
                 break
             else:
-                for n in range(population):
-                    # Update the velocity of each particle
-                    velocity[n] = update_velocity(particles[n], velocity[n], pbest_position[n], gbest_position)
-                    # Move the particles to new position
-                    particles[n] = update_position(particles[n], velocity[n])
-            # Calculate the fitness value
-            pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
-            # Find the index of the best particle
-            gbest_index = np.argmin(pbest_fitness)
-            # Update the position of the best particle
-            gbest_position = pbest_position[gbest_index]
+                if hamming == 1:
+                    dist_list = []
+                    for n in range(population):
+                        # Update the velocity of each particle
+                        velocity[n] = update_velocity(particles[n], velocity[n], pbest_position[n], gbest_position)
+                        # Move the particles to new position
+                        particles[n], distance = update_position_hamming(particles[n], velocity[n], gbest_position)
+                        dist_list.append(distance)
 
-            # zapamietuje wszystkie ruchy czasteczki pochodzacej od rozwiazania losowego
-            iter_particle.append(particles[0])
+                    # indeks czasteczki o najmniejszym dystansie do gbest
+                    min_dist_indx = 0
+                    for n in range(population):
+                        if sum(dist_list[n]) < min_dist_indx:
+                            min_dist_indx = n
+
+
+                    # Calculate the fitness value
+                    pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+                    # Find the index of the best particle
+                    #gbest_index = np.argmin(pbest_fitness)
+                    # Update the position of the best particle
+                    gbest_position = particles[min_dist_indx]
+
+                    # zapamietuje wszystkie ruchy czasteczki pochodzacej od rozwiazania losowego
+                    iter_particle.append(particles[0])
+                if hamming == 0:
+                    for n in range(population):
+                        # Update the velocity of each particle
+                        velocity[n] = update_velocity(particles[n], velocity[n], pbest_position[n], gbest_position)
+                        # Move the particles to new position
+                        particles[n] = update_position(particles[n], velocity[n])
+                        # Calculate the fitness value
+                    pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+                    # Find the index of the best particle
+                    gbest_index = np.argmin(pbest_fitness)
+                    # Update the position of the best particle
+                    gbest_position = pbest_position[gbest_index]
+
+                    # zapamietuje wszystkie ruchy czasteczki pochodzacej od rozwiazania losowego
+                    iter_particle.append(particles[0])
+
         day_particle_change.append(iter_particle)
         ceil_particles = (np.ceil(particles)).astype(int)
         # print(ceil_particles[-1])  # ostateczne rozwiazanie (ilosc karmy zakupionej w danych dniach)
