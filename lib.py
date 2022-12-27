@@ -107,32 +107,10 @@ random_solution = create_random_solution()
 # print(random_solution)
 # print(len(random_solution))
 
-
-# funkcja celu - argumentem jest rozwiązanie
-# sumaryczna wartość zakupionych karm na przestrzeni miesiąca
-
-
-def compute_total_cost(solution):
-    total_cost = 0
-    for eidx, elem in enumerate(solution):
-        daily_cost = 0
-        day = eidx + 1
-        for inx, fodder in enumerate(elem):
-            daily_cost += fodders[inx].price[day] * fodder
-        total_cost += daily_cost
-    return total_cost
-
-
-total_cost = compute_total_cost(random_solution)
-
-
-# print(total_cost)
-
-
 # sprawdzanie czy w każdym dniu zapewniliśmy minimum zapotrzebowania - jeśli nie nakładamy karę do kosztu całkowitego
 # gdy przepuścimy rozwiazanie niedopuszczalne to nakładamy bardzo dużą karę
-def check_penalty(solution):
-    penalty_price = 10000
+def check_solution_penalty(solution):
+    penalty_price = 1000
     for elem in solution:
         protein, fat, carbo = 0, 0, 0
         for inx, fodder in enumerate(elem):
@@ -146,9 +124,31 @@ def check_penalty(solution):
     return 0
 
 
+# funkcja celu - argumentem jest rozwiązanie
+# sumaryczna wartość zakupionych karm na przestrzeni miesiąca
+
+
+def compute_total_cost(solution):
+    total_cost = 0
+    penalty = check_solution_penalty(solution)
+    for eidx, elem in enumerate(solution):
+        daily_cost = 0
+        day = eidx + 1
+        for inx, fodder in enumerate(elem):
+            daily_cost += fodders[inx].price[day] * fodder
+        total_cost += daily_cost
+    return total_cost + penalty
+
+
+total_cost = compute_total_cost(random_solution)
+
+
+# print(total_cost)
+
+
 # kara za jeden dzien
 def check_macro_penalty(f1, f2, f3, f4, f5):
-    penalty_price = float('inf')
+    penalty_price = 100000
     if f1 < 0 or f2 < 0 or f3 < 0 or f4 < 0 or f5 < 0:
         return penalty_price
     protein = fodders[0].protein * f1 + fodders[1].protein * f2 + fodders[2].protein * f3 + fodders[3].protein * f4 + \
@@ -157,8 +157,16 @@ def check_macro_penalty(f1, f2, f3, f4, f5):
           fodders[4].fat * f5
     carbo = fodders[0].carbohydrates * f1 + fodders[1].carbohydrates * f2 + fodders[2].carbohydrates * f3 + \
             fodders[3].carbohydrates * f4 + fodders[4].carbohydrates * f5
+
+    if protein < protein_need_per_day:
+        penalty_price *= 5
+    if fat < fat_need_per_day:
+        penalty_price *= 2
+    if carbo < carbo_need_per_day:
+        penalty_price *= 3
     if protein < protein_need_per_day or fat < fat_need_per_day or carbo < carbo_need_per_day:
         return penalty_price
+
     return 0
 
 
@@ -185,12 +193,19 @@ def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=1)
     # Randomly generate r1, r2 and inertia weight from normal distribution
     r1 = random.uniform(0.1, w_max)
     r2 = random.uniform(0.1, w_max)
-    w = random.uniform(0.1, 0.5)
+    # przy zmianie na 1 dostaje cos madrego
+    w = 1
     c1 = c
     c2 = c
     # Calculate new velocity
     for i in range(num_particle):
         new_velocity[i] = w * velocity[i] + c1 * r1 * (pbest[i] - particle[i]) + c2 * r2 * (gbest[i] - particle[i])
+
+    temp_new_particle = (particle + velocity)
+    for idx, p in enumerate(temp_new_particle):
+        if p < 0:
+            x = random.uniform(0.1, 1.0)
+            new_velocity[idx] = x
     return new_velocity
 
 
@@ -207,6 +222,10 @@ def update_position_hamming(particle, velocity, gbest_position):
 def update_position(particle, velocity):
     # Move particles by adding velocity
     new_particle = (particle + velocity)
+    for idx, np in enumerate(new_particle):
+        if np < 0:
+            new_particle[idx] = 0
+
     return new_particle
 
 
@@ -240,7 +259,9 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
         for t in range(generation):
             # Stop if the average fitness value reached a predefined success criterion
             if np.average(pbest_fitness) <= fitness_criterion:
-                break
+                iter_particle.append(particles[0])
+                pass
+
             else:
                 if hamming == 1:
                     dist_list = []
@@ -249,6 +270,7 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
                         velocity[n] = update_velocity(particles[n], velocity[n], pbest_position[n], gbest_position)
                         # Move the particles to new position
                         particles[n], distance = update_position_hamming(particles[n], velocity[n], gbest_position)
+
                         dist_list.append(distance)
 
                     # indeks czasteczki o najmniejszym dystansie do gbest
@@ -257,11 +279,10 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
                         if sum(dist_list[n]) < min_dist_indx:
                             min_dist_indx = n
 
-
                     # Calculate the fitness value
                     pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
                     # Find the index of the best particle
-                    #gbest_index = np.argmin(pbest_fitness)
+                    # gbest_index = np.argmin(pbest_fitness)
                     # Update the position of the best particle
                     gbest_position = particles[min_dist_indx]
 
@@ -290,8 +311,7 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
         day += 1
     return solution, day_particle_change
 
-
-total_cost += check_penalty(random_solution)
+# total_cost += check_penalty(random_solution)
 # print(total_cost)
 
 # pso(20, 5, 10, 80, 200, 0.001, random_solution)
