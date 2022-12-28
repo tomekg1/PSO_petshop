@@ -16,6 +16,8 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
 
         self.listwidget_fodders = QtWidgets.QListWidget(self)
 
+        self.tablewidget_solution = QtWidgets.QTableWidget(self)
+
         self.textbox1 = QLineEdit(self)
         self.textbox2 = QLineEdit(self)
         self.textbox3 = QLineEdit(self)
@@ -41,6 +43,7 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.label_pmin = QtWidgets.QLabel(self)
         self.label_pmax = QtWidgets.QLabel(self)
         self.label_remove = QtWidgets.QLabel(self)
+        self.label_solution = QtWidgets.QLabel(self)
 
         self.label_gen = QtWidgets.QLabel(self)
         self.label_part = QtWidgets.QLabel(self)
@@ -135,6 +138,11 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.label_posmax.setFont(QtGui.QFont('Arial', 10))
         self.label_posmax.adjustSize()
 
+        self.label_solution.setText('Solution - amount of fodders to buy each day')
+        self.label_solution.move(10, 500)
+        self.label_solution.setFont(QtGui.QFont('Arial', 20))
+        self.label_solution.adjustSize()
+
         self.textbox1.move(10, 100)
         self.textbox1.resize(70, 40)
         self.textbox1.setFont(QtGui.QFont('Arial', 20))
@@ -189,8 +197,20 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.listwidget_fodders.resize(500, 300)
         self.listwidget_fodders.setFont(QtGui.QFont('Arial', 12))
         for i in lib.fodders:
-            self.listwidget_fodders.addItem(f'{self.fodd_idx} fodder:  protein={i.protein},  fat={i.fat},  carbohydrates={i.carbohydrates}')
+            self.listwidget_fodders.addItem(f'{self.fodd_idx} fodder:  protein={i.protein},  fat={i.fat},  '
+                                            f'carbohydrates={i.carbohydrates}')
             self.fodd_idx += 1
+
+        self.tablewidget_solution.move(10, 550)
+        self.tablewidget_solution.resize(700, 400)
+        self.tablewidget_solution.setFont(QtGui.QFont('Arial', 12))
+        self.tablewidget_solution.setRowCount(31)
+        self.tablewidget_solution.setColumnCount(len(lib.fodders) + 1)
+        self.tablewidget_solution.setItem(0, 0, QtWidgets.QTableWidgetItem('Day'))
+        for i in range(1, 31):
+            self.tablewidget_solution.setItem(i, 0, QtWidgets.QTableWidgetItem(f'{i}'))
+        self.tablewidget_solution.resizeColumnsToContents()
+
 
     def button_pso_press(self):
         generations = int(self.textbox_gen.text())
@@ -198,8 +218,31 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         posmin = int(self.textbox_gen.text())
         posmax = int(self.textbox_gen.text())
 
-        self.canvas1.update1(generations, population, posmin, posmax)
+        random_solution = lib.create_random_solution(lib.fodders)
+        random_cost = lib.compute_total_cost(random_solution)
+        solution, day_particle_change = lib.pso(population, lib.fodders, posmin, posmax, generations, 0.001,
+                                                random_solution,
+                                                hamming=0)
+        cost_changes = [random_cost]
+
+        for gen in range(len(day_particle_change[0])):
+            sort_iter = []
+            for day in range(len(day_particle_change)):
+                sort_iter.append(day_particle_change[day][gen])
+            cost_changes.append(int(lib.compute_total_cost(sort_iter)))
+
+        self.canvas1.update1(cost_changes)
         self.canvas1.draw()  # draw to update plot in mainwindow
+
+        self.tablewidget_solution.setColumnCount(len(lib.fodders) + 1)
+        for i in range(1, len(lib.fodders) + 1):
+            self.tablewidget_solution.setItem(0, i, QtWidgets.QTableWidgetItem(f'fodder_{i-1}'))
+        for idx_sol, elem in enumerate(solution):
+            for ix, f in enumerate(elem):
+                row = idx_sol + 1
+                col = ix + 1
+                self.tablewidget_solution.setItem(row, col, QtWidgets.QTableWidgetItem(f'{f}'))
+        self.tablewidget_solution.resizeColumnsToContents()
 
     def button2_press(self):
         protein = int(self.textbox1.text())
@@ -248,20 +291,10 @@ class PlotCanvas(FigureCanvas):
         self.ax.plot(y, 'k-')
         self.ax.grid()
 
-    def update1(self, generations, population, posmin, posmax):
+    def update1(self, cost_changes):
         # tutaj odpalam pso dla podanych wartosci w textboxach i od karmy ale to pozniej
 
-        random_solution = lib.create_random_solution(lib.fodders)
-        random_cost = lib.compute_total_cost(random_solution)
-        solution, day_particle_change = lib.pso(population, lib.fodders, posmin, posmax, generations, 0.001, random_solution,
-                                                hamming=0)
-        cost_changes = [random_cost]
 
-        for gen in range(len(day_particle_change[0])):
-            sort_iter = []
-            for day in range(len(day_particle_change)):
-                sort_iter.append(day_particle_change[day][gen])
-            cost_changes.append(int(lib.compute_total_cost(sort_iter)))
 
         # TODO ogarnąć skąd biorą się te ogromne wartości od ~2-5 iteracji
         #cost_changes = [95000 if i > 110000 else i for i in cost_changes]
