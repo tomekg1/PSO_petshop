@@ -12,6 +12,10 @@ import lib
 class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna glownego
     def __init__(self):
         super(MyWindow, self).__init__()  # uruchamiam parametry klasy z ktorej dziedzicze
+        self.fodd_idx = 0
+
+        self.listwidget_fodders = QtWidgets.QListWidget(self)
+
         self.textbox1 = QLineEdit(self)
         self.textbox2 = QLineEdit(self)
         self.textbox3 = QLineEdit(self)
@@ -19,9 +23,13 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.textbox_part = QLineEdit(self)
         self.textbox_posmin = QLineEdit(self)
         self.textbox_posmax = QLineEdit(self)
+        self.textbox4 = QLineEdit(self)
+        self.textbox5 = QLineEdit(self)
+        self.textbox_idx_remove = QLineEdit(self)
 
         self.button_pso = QtWidgets.QPushButton(self)
         self.button2 = QtWidgets.QPushButton(self)
+        self.button_remove = QtWidgets.QPushButton(self)
 
         self.canvas1 = PlotCanvas(self, width=8, height=5)
 
@@ -30,6 +38,9 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.label_p = QtWidgets.QLabel(self)
         self.label_f = QtWidgets.QLabel(self)
         self.label_c = QtWidgets.QLabel(self)
+        self.label_pmin = QtWidgets.QLabel(self)
+        self.label_pmax = QtWidgets.QLabel(self)
+        self.label_remove = QtWidgets.QLabel(self)
 
         self.label_gen = QtWidgets.QLabel(self)
         self.label_part = QtWidgets.QLabel(self)
@@ -52,13 +63,30 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.button_pso.setFont(QtGui.QFont('Arial', 24))
         self.button_pso.clicked.connect(self.button_pso_press)
 
+        self.button2.setText('Add')
+        self.button2.resize(100, 40)
+        self.button2.move(570, 100)
+        self.button2.setFont(QtGui.QFont('Arial', 14))
+        self.button2.clicked.connect(self.button2_press)
+
+        self.button_remove.setText('Remove')
+        self.button_remove.move(660, 255)
+        self.button_remove.setFont(QtGui.QFont('Arial', 14))
+        self.button_remove.adjustSize()
+        self.button_remove.clicked.connect(self.button_remove_press)
+
+        self.label_remove.setText('Choose index to remove')
+        self.label_remove.move(570, 220)
+        self.label_remove.setFont(QtGui.QFont('Arial', 12))
+        self.label_remove.adjustSize()
+
         self.label1.setText('Create new fodder')
         self.label1.move(10, 10)
         self.label1.setFont(QtGui.QFont('Arial', 20))
         self.label1.adjustSize()
 
         self.label2.setText('PSO algorithm parameters')
-        self.label2.move(1000, 10)
+        self.label2.move(1100, 10)
         self.label2.setFont(QtGui.QFont('Arial', 20))
         self.label2.adjustSize()
 
@@ -77,62 +105,92 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.label_c.setFont(QtGui.QFont('Arial', 10))
         self.label_c.adjustSize()
 
+        self.label_pmin.setText('price min')
+        self.label_pmin.move(340, 75)
+        self.label_pmin.setFont(QtGui.QFont('Arial', 10))
+        self.label_pmin.adjustSize()
+
+        self.label_pmax.setText('price max')
+        self.label_pmax.move(440, 75)
+        self.label_pmax.setFont(QtGui.QFont('Arial', 10))
+        self.label_pmax.adjustSize()
+
         self.label_gen.setText('number of generations')
-        self.label_gen.move(800, 175)
+        self.label_gen.move(1000, 175)
         self.label_gen.setFont(QtGui.QFont('Arial', 10))
         self.label_gen.adjustSize()
 
         self.label_part.setText('number of particles')
-        self.label_part.move(1000, 175)
+        self.label_part.move(1200, 175)
         self.label_part.setFont(QtGui.QFont('Arial', 10))
         self.label_part.adjustSize()
 
         self.label_posmin.setText('minimal position')
-        self.label_posmin.move(1200, 175)
+        self.label_posmin.move(1400, 175)
         self.label_posmin.setFont(QtGui.QFont('Arial', 10))
         self.label_posmin.adjustSize()
 
         self.label_posmax.setText('maximal position')
-        self.label_posmax.move(1400, 175)
+        self.label_posmax.move(1600, 175)
         self.label_posmax.setFont(QtGui.QFont('Arial', 10))
         self.label_posmax.adjustSize()
 
         self.textbox1.move(10, 100)
         self.textbox1.resize(70, 40)
         self.textbox1.setFont(QtGui.QFont('Arial', 20))
+        self.textbox1.setText('10')
 
         self.textbox2.move(110, 100)
         self.textbox2.resize(70, 40)
         self.textbox2.setFont(QtGui.QFont('Arial', 20))
+        self.textbox2.setText('10')
 
         self.textbox3.move(210, 100)
         self.textbox3.resize(70, 40)
         self.textbox3.setFont(QtGui.QFont('Arial', 20))
+        self.textbox3.setText('10')
 
-        self.textbox_gen.move(800, 200)
+        self.textbox4.move(340, 100)
+        self.textbox4.resize(70, 40)
+        self.textbox4.setFont(QtGui.QFont('Arial', 20))
+        self.textbox4.setText('10')
+
+        self.textbox5.move(440, 100)
+        self.textbox5.resize(70, 40)
+        self.textbox5.setFont(QtGui.QFont('Arial', 20))
+        self.textbox5.setText('20')
+
+        self.textbox_gen.move(1000, 200)
         self.textbox_gen.resize(70, 40)
         self.textbox_gen.setFont(QtGui.QFont('Arial', 20))
         self.textbox_gen.setText('150')
 
-        self.textbox_part.move(1000, 200)
+        self.textbox_part.move(1200, 200)
         self.textbox_part.resize(70, 40)
         self.textbox_part.setFont(QtGui.QFont('Arial', 20))
         self.textbox_part.setText('20')
 
-        self.textbox_posmin.move(1200, 200)
+        self.textbox_posmin.move(1400, 200)
         self.textbox_posmin.resize(70, 40)
         self.textbox_posmin.setFont(QtGui.QFont('Arial', 20))
         self.textbox_posmin.setText('10')
 
-        self.textbox_posmax.move(1400, 200)
+        self.textbox_posmax.move(1600, 200)
         self.textbox_posmax.resize(70, 40)
         self.textbox_posmax.setFont(QtGui.QFont('Arial', 20))
         self.textbox_posmax.setText('80')
 
-        self.button2.setText('Confirm')
-        self.button2.resize(100, 40)
-        self.button2.move(330, 100)
-        self.button2.setFont(QtGui.QFont('Arial', 14))
+        self.textbox_idx_remove.move(570, 250)
+        self.textbox_idx_remove.resize(70, 40)
+        self.textbox_idx_remove.setFont(QtGui.QFont('Arial', 20))
+        self.textbox_idx_remove.setText('0')
+
+        self.listwidget_fodders.move(10, 150)
+        self.listwidget_fodders.resize(500, 300)
+        self.listwidget_fodders.setFont(QtGui.QFont('Arial', 12))
+        for i in lib.fodders:
+            self.listwidget_fodders.addItem(f'{self.fodd_idx} fodder:  protein={i.protein},  fat={i.fat},  carbohydrates={i.carbohydrates}')
+            self.fodd_idx += 1
 
     def button_pso_press(self):
         generations = int(self.textbox_gen.text())
@@ -142,6 +200,35 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
 
         self.canvas1.update1(generations, population, posmin, posmax)
         self.canvas1.draw()  # draw to update plot in mainwindow
+
+    def button2_press(self):
+        protein = int(self.textbox1.text())
+        fat = int(self.textbox2.text())
+        carbohydrates = int(self.textbox3.text())
+        posmin = int(self.textbox4.text())
+        posmax = int(self.textbox5.text())
+
+        lib.create_new_fodder(protein, fat, carbohydrates, posmin, posmax)
+        self.listwidget_fodders.addItem(f'{self.fodd_idx} fodder:  protein={protein},  fat={fat},  carbohydrates={carbohydrates}')
+        self.fodd_idx += 1
+        print(lib.fodders)
+
+    def update_index(self):
+        self.listwidget_fodders.clear()
+        for i in lib.fodders:
+            self.listwidget_fodders.addItem(
+                f'{self.fodd_idx} fodder:  protein={i.protein},  fat={i.fat},  carbohydrates={i.carbohydrates}')
+            self.fodd_idx += 1
+
+    def button_remove_press(self):
+        index = int(self.textbox_idx_remove.text())
+        lib.fodders.pop(index)
+        self.listwidget_fodders.takeItem(index)
+        self.fodd_idx = 0
+        self.update_index()
+
+
+
 
 
 class PlotCanvas(FigureCanvas):
@@ -164,9 +251,9 @@ class PlotCanvas(FigureCanvas):
     def update1(self, generations, population, posmin, posmax):
         # tutaj odpalam pso dla podanych wartosci w textboxach i od karmy ale to pozniej
 
-        random_solution = lib.create_random_solution()
+        random_solution = lib.create_random_solution(lib.fodders)
         random_cost = lib.compute_total_cost(random_solution)
-        solution, day_particle_change = lib.pso(population, 5, posmin, posmax, generations, 0.001, random_solution,
+        solution, day_particle_change = lib.pso(population, lib.fodders, posmin, posmax, generations, 0.001, random_solution,
                                                 hamming=0)
         cost_changes = [random_cost]
 
@@ -177,7 +264,7 @@ class PlotCanvas(FigureCanvas):
             cost_changes.append(int(lib.compute_total_cost(sort_iter)))
 
         # TODO ogarnąć skąd biorą się te ogromne wartości od ~2-5 iteracji
-        cost_changes = [95000 if i > 110000 else i for i in cost_changes]
+        #cost_changes = [95000 if i > 110000 else i for i in cost_changes]
 
         self.ax.clear()
         self.ax.plot(cost_changes, 'k-')

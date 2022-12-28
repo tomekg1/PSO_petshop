@@ -60,52 +60,29 @@ protein_need_per_day = macro_need_per_day[0]
 fat_need_per_day = macro_need_per_day[1]
 carbo_need_per_day = macro_need_per_day[2]
 
-# print(macro_need_per_day)
+
+# tworzenie nowego rodzaju karmy
+def create_new_fodder(protein, fat, carbo, p_min, p_max):
+    price = {}
+    for day in range(1, 31):
+        price[day] = np.random.randint(p_min, p_max)
+    fodd = Fodder(protein, fat, carbo, price)
+    fodders.append(fodd)
+
+
 # generowanie losowego rozwiązania
-
-
-'''def create_random_solution():
+def create_random_solution(fodders):
     random_solution = []
 
     for i in range(1, 31):
-        protein, fat, carb = 0, 0, 0
-        fod1, fod2, fod3 = 0, 0, 0
-        while protein < protein_need_per_day or fat < fat_need_per_day or carb < carbo_need_per_day:
-            rand = random.randint(0, 2)
-            if rand == 0:
-                fod1 += 1
-            if rand == 1:
-                fod2 += 1
-            if rand == 2:
-                fod3 += 1
-
-            protein += fodders[rand].protein
-            fat += fodders[rand].fat
-            carb += fodders[rand].carbohydrates
-
-        random_solution.append([fod1, fod2, fod3])
-    return random_solution'''
-
-
-def create_random_solution():
-    random_solution = []
-
-    for i in range(1, 31):
-        fod1 = random.randint(10, 60)
-        fod2 = random.randint(10, 60)
-        fod3 = random.randint(10, 60)
-        fod4 = random.randint(10, 60)
-        fod5 = random.randint(10, 60)
-        random_solution.append([fod1, fod2, fod3, fod4, fod5])
+        temp = []
+        for f in fodders:
+            fod = random.randint(10, 60)
+            temp.append(fod)
+        random_solution.append(temp)
 
     return random_solution
 
-
-random_solution = create_random_solution()
-
-
-# print(random_solution)
-# print(len(random_solution))
 
 # sprawdzanie czy w każdym dniu zapewniliśmy minimum zapotrzebowania - jeśli nie nakładamy karę do kosztu całkowitego
 # gdy przepuścimy rozwiazanie niedopuszczalne to nakładamy bardzo dużą karę
@@ -124,10 +101,7 @@ def check_solution_penalty(solution):
     return 0
 
 
-# funkcja celu - argumentem jest rozwiązanie
-# sumaryczna wartość zakupionych karm na przestrzeni miesiąca
-
-
+# obliczenie całkowitego kosztu na bazie rozwiazania
 def compute_total_cost(solution):
     total_cost = 0
     penalty = check_solution_penalty(solution)
@@ -140,23 +114,17 @@ def compute_total_cost(solution):
     return total_cost + penalty
 
 
-total_cost = compute_total_cost(random_solution)
-
-
-# print(total_cost)
-
-
 # kara za jeden dzien
-def check_macro_penalty(f1, f2, f3, f4, f5):
+def check_macro_penalty(fodds):
     penalty_price = 100000
-    if f1 < 0 or f2 < 0 or f3 < 0 or f4 < 0 or f5 < 0:
-        return penalty_price
-    protein = fodders[0].protein * f1 + fodders[1].protein * f2 + fodders[2].protein * f3 + fodders[3].protein * f4 + \
-              fodders[4].protein * f5
-    fat = fodders[0].fat * f1 + fodders[1].fat * f2 + fodders[2].fat * f3 + fodders[3].fat * f4 + \
-          fodders[4].fat * f5
-    carbo = fodders[0].carbohydrates * f1 + fodders[1].carbohydrates * f2 + fodders[2].carbohydrates * f3 + \
-            fodders[3].carbohydrates * f4 + fodders[4].carbohydrates * f5
+
+    protein = 0
+    fat = 0
+    carbo = 0
+    for idx, fodd in enumerate(fodds):
+        protein += fodders[idx].protein * fodds[idx]
+        fat += fodders[idx].fat * fodds[idx]
+        carbo += fodders[idx].carbohydrates * fodds[idx]
 
     if protein < protein_need_per_day:
         penalty_price *= 5
@@ -170,22 +138,16 @@ def check_macro_penalty(f1, f2, f3, f4, f5):
     return 0
 
 
-# jako sąsiedztwo przyjmiemy
-
-
 # funkcja celu dla kazdego dnia
-
-
-def daily_cost(f1, f2, f3, f4, f5, day):
-    return fodder1.price[day] * f1 + fodder2.price[day] * f2 + fodder3.price[day] * f3 + fodder4.price[day] * f4 + \
-           fodder5.price[day] * f5 + check_macro_penalty(f1, f2, f3, f4, f5)
-
-
-# print(daily_cost(1, 1, 1, 1, 1, 1))
+def daily_cost(fodds, day):
+    total_cost = 0
+    for idx, fodd in enumerate(fodders):
+        total_cost += fodd.price[day] * fodds[idx]
+    total_cost += check_macro_penalty(fodds)
+    return total_cost
 
 
 # PSO - bedziemy minimalizowac ilosc kupionej karmy w kazdym dniu po kolei
-
 def update_velocity(particle, velocity, pbest, gbest, w_min=0.5, w_max=1.0, c=1):
     # Initialise new velocity array
     num_particle = len(particle)
@@ -233,9 +195,10 @@ def update_position(particle, velocity):
 # dimension - wymiar problemu tutaj 5
 # position_min, position_max - pozycja startowa cząsteczek
 # generation - liczba updateów
-def pso(population, dimension, position_min, position_max, generation, fitness_criterion, random_solution, hamming=0):
+def pso(population, fodds, position_min, position_max, generation, fitness_criterion, random_solution, hamming=0):
     day = 1
     solution = []
+    dimension = len(fodds)
     # przechodzenie czastek w dniach
     day_particle_change = []
     for i in range(len(random_solution)):
@@ -245,7 +208,7 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
         # Particle's best position - najlepsze polozenia czasteczek
         pbest_position = particles
         # Fitness - najlepszy koszt polozenia danej czasteczki
-        pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+        pbest_fitness = [daily_cost(p, day) for p in particles]
         # Index of the best particle
         gbest_index = np.argmin(pbest_fitness)
         # Global best particle position
@@ -280,7 +243,7 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
                             min_dist_indx = n
 
                     # Calculate the fitness value
-                    pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+                    pbest_fitness = [daily_cost(p, day) for p in particles]
                     # Find the index of the best particle
                     # gbest_index = np.argmin(pbest_fitness)
                     # Update the position of the best particle
@@ -295,7 +258,7 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
                         # Move the particles to new position
                         particles[n] = update_position(particles[n], velocity[n])
                         # Calculate the fitness value
-                    pbest_fitness = [daily_cost(p[0], p[1], p[2], p[3], p[4], day) for p in particles]
+                    pbest_fitness = [daily_cost(p, day) for p in particles]
                     # Find the index of the best particle
                     gbest_index = np.argmin(pbest_fitness)
                     # Update the position of the best particle
@@ -311,7 +274,3 @@ def pso(population, dimension, position_min, position_max, generation, fitness_c
         day += 1
     return solution, day_particle_change
 
-# total_cost += check_penalty(random_solution)
-# print(total_cost)
-
-# pso(20, 5, 10, 80, 200, 0.001, random_solution)

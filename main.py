@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 # create random solution 30 x 5
 # run PSO
 #
-random_solution = lib.create_random_solution()
+random_solution = lib.create_random_solution(lib.fodders)
 random_cost = lib.compute_total_cost(random_solution)
 print('\n------WYGENEROWANE ROZWIAZANIE POCZATKOWE------')
 print(random_solution)
 
 generation = 150
-solution, day_particle_change = lib.pso(20, 5, 10, 80, generation, 0.001, random_solution, hamming=0)
+solution, day_particle_change = lib.pso(20, lib.fodders, 10, 80, generation, 0.001, random_solution, hamming=0)
 print('\n------ROZWIAZANIE DLA 1 CZASTECZKI------')
 print(solution)
 
