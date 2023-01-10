@@ -1,0 +1,22 @@
+Final prices:
+19645
+18077
+19342
+18230
+17958
+20380
+19584
+18096
+21036
+20878
+
+Mean = 19322.600
+Standard deviation = 1129.501
+
+Fodders:
+fodder_0:  protein=15, fat=10, carbohydrates=30
+fodder_1:  protein=40, fat=20, carbohydrates=15
+fodder_2:  protein=25, fat=45, carbohydrates=20
+fodder_3:  protein=20, fat=15, carbohydrates=25
+fodder_4:  protein=10, fat=20, carbohydrates=15
+fodder_5:  protein=100, fat=100, carbohydrates=100

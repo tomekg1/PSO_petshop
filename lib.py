@@ -76,8 +76,9 @@ def create_random_solution(fodders):
 
     for i in range(1, 31):
         temp = []
+        f_len = len(fodders)
         for f in fodders:
-            fod = random.randint(10, 60)
+            fod = random.randint(f_len*6, f_len*12)
             temp.append(fod)
         random_solution.append(temp)
 
@@ -99,6 +100,20 @@ def check_solution_penalty(solution):
             return penalty_price
 
     return 0
+
+
+def cost_changes_format(random_cost, day_particle_change, generations):
+    cost_changes = [random_cost]
+    for gen in range(len(day_particle_change[0])):
+        sort_iter = []
+        for day in range(len(day_particle_change)):
+            sort_iter.append(day_particle_change[day][gen])
+        cost_changes.append(int(lib.compute_total_cost(sort_iter)))
+    for idx, elem in enumerate(cost_changes):
+        if elem > cost_changes[0]:
+            cost_changes[idx] = cost_changes[0] + elem / generations * 20
+    return cost_changes
+#def compute_cost_changes()
 
 
 # obliczenie całkowitego kosztu na bazie rozwiazania

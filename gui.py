@@ -7,6 +7,20 @@ import numpy as np
 import sys
 import main
 import lib
+import time
+
+
+def cost_changes_format(random_cost, day_particle_change, generations):
+    cost_changes = [random_cost]
+    for gen in range(len(day_particle_change[0])):
+        sort_iter = []
+        for day in range(len(day_particle_change)):
+            sort_iter.append(day_particle_change[day][gen])
+        cost_changes.append(int(lib.compute_total_cost(sort_iter)))
+    for idx, elem in enumerate(cost_changes):
+        if elem > cost_changes[0]:
+            cost_changes[idx] = cost_changes[0] + elem / generations * 20
+    return cost_changes
 
 
 class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna glownego
@@ -44,11 +58,15 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.label_pmax = QtWidgets.QLabel(self)
         self.label_remove = QtWidgets.QLabel(self)
         self.label_solution = QtWidgets.QLabel(self)
+        self.label_time_pso = QtWidgets.QLabel(self)
+        self.label_time = QtWidgets.QLabel(self)
 
         self.label_gen = QtWidgets.QLabel(self)
         self.label_part = QtWidgets.QLabel(self)
         self.label_posmin = QtWidgets.QLabel(self)
         self.label_posmax = QtWidgets.QLabel(self)
+
+        self.radio_button = QtWidgets.QRadioButton(self)
 
         self.setGeometry(0, 0, 1800, 1000)
         self.setStyleSheet("background-color: lightgray;")
@@ -143,6 +161,15 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.label_solution.setFont(QtGui.QFont('Arial', 20))
         self.label_solution.adjustSize()
 
+        self.label_time.setText('Execution time')
+        self.label_time.move(1600, 300)
+        self.label_time.setFont(QtGui.QFont('Arial', 10))
+        self.label_time.adjustSize()
+
+        self.label_time_pso.move(1600, 330)
+        self.label_time_pso.setFont(QtGui.QFont('Arial', 20))
+        self.label_time_pso.adjustSize()
+
         self.textbox1.move(10, 100)
         self.textbox1.resize(70, 40)
         self.textbox1.setFont(QtGui.QFont('Arial', 20))
@@ -171,7 +198,7 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.textbox_gen.move(1000, 200)
         self.textbox_gen.resize(70, 40)
         self.textbox_gen.setFont(QtGui.QFont('Arial', 20))
-        self.textbox_gen.setText('150')
+        self.textbox_gen.setText('100')
 
         self.textbox_part.move(1200, 200)
         self.textbox_part.resize(70, 40)
@@ -196,6 +223,11 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.listwidget_fodders.move(10, 150)
         self.listwidget_fodders.resize(500, 300)
         self.listwidget_fodders.setFont(QtGui.QFont('Arial', 12))
+
+        self.radio_button.setText('Testing')
+        self.radio_button.move(1000, 330)
+        self.radio_button.setChecked(False)
+
         for i in lib.fodders:
             self.listwidget_fodders.addItem(f'{self.fodd_idx} fodder:  protein={i.protein},  fat={i.fat},  '
                                             f'carbohydrates={i.carbohydrates}')
@@ -211,6 +243,29 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
             self.tablewidget_solution.setItem(i, 0, QtWidgets.QTableWidgetItem(f'{i}'))
         self.tablewidget_solution.resizeColumnsToContents()
 
+    def pso_testing(self, generations, population, posmin, posmax, random_solution):
+        final_costs = []
+        for i in range(10):
+            solution, day_particle_change = lib.pso(population, lib.fodders, posmin, posmax, generations, 0.001,
+                                                    random_solution,
+                                                    hamming=0)
+            random_cost = lib.compute_total_cost(random_solution)
+            cost_changes = cost_changes_format(random_cost, day_particle_change, generations)
+            final_costs.append(cost_changes[-1])
+        with open('test.txt', 'w') as f:
+            f.write('Final prices:\n')
+            for fc in final_costs:
+                f.write(f'{fc}\n')
+            f.write('\n')
+        cost_mean = np.mean(final_costs)
+        cost_stdev = np.std(final_costs)
+        with open('test.txt', 'a') as f:
+            f.write(f'Mean = {cost_mean:.3f}\nStandard deviation = {cost_stdev:.3f}\n\nFodders:\n')
+            f_num = 0
+            for fodd in lib.fodders:
+                f.write(f'fodder_{f_num}:  protein={fodd.protein}, fat={fodd.fat}, carbohydrates={fodd.carbohydrates}\n')
+                f_num += 1
+        self.radio_button.setChecked(False)
 
     def button_pso_press(self):
         generations = int(self.textbox_gen.text())
@@ -219,17 +274,20 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         posmax = int(self.textbox_gen.text())
 
         random_solution = lib.create_random_solution(lib.fodders)
+
+        if self.radio_button.isChecked():
+            self.pso_testing(generations, population, posmin, posmax, random_solution)
+
         random_cost = lib.compute_total_cost(random_solution)
+        time_start = time.time()
         solution, day_particle_change = lib.pso(population, lib.fodders, posmin, posmax, generations, 0.001,
                                                 random_solution,
                                                 hamming=0)
-        cost_changes = [random_cost]
-
-        for gen in range(len(day_particle_change[0])):
-            sort_iter = []
-            for day in range(len(day_particle_change)):
-                sort_iter.append(day_particle_change[day][gen])
-            cost_changes.append(int(lib.compute_total_cost(sort_iter)))
+        time_end = time.time()
+        pso_time = time_end - time_start
+        self.label_time_pso.setText(f'{pso_time:.3f}s')
+        self.label_time_pso.adjustSize()
+        cost_changes = cost_changes_format(random_cost, day_particle_change, generations)
 
         self.canvas1.update1(cost_changes)
         self.canvas1.draw()  # draw to update plot in mainwindow
@@ -242,6 +300,7 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
                 row = idx_sol + 1
                 col = ix + 1
                 self.tablewidget_solution.setItem(row, col, QtWidgets.QTableWidgetItem(f'{f}'))
+
         self.tablewidget_solution.resizeColumnsToContents()
 
     def button2_press(self):
@@ -269,9 +328,6 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         self.listwidget_fodders.takeItem(index)
         self.fodd_idx = 0
         self.update_index()
-
-
-
 
 
 class PlotCanvas(FigureCanvas):
