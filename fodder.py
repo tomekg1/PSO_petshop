@@ -1,5 +1,3 @@
-import numpy as np
-
 
 class Fodder:
     def __init__(self, protein: int, fat: int, carbohydrates: int, price: dict):
@@ -10,46 +8,14 @@ class Fodder:
 
 
 class Animal:
-    #macro_need = 0
     def __init__(self, number: int, protein_need: int, fat_need: int, carbohydrates_need: int):
         self.number = number
         self.protein_need = protein_need * number
         self.fat_need = fat_need * number
         self.carbohydrates_need = carbohydrates_need * number
-        #Animal.__macro_need = np.add(Animal.macro_need, [self.protein_need, self.fat_need, self.carbohydrates_need])
 
     def get_macro_need(self):
         return [self.protein_need, self.fat_need, self.carbohydrates_need]
-
-
-# ilość miejsca w magazynie
-class Warehouse:
-    def __init__(self, space: float, fodder1_space: float, fodder2_space: float, fodder3_space: float):
-        self.space_used = None
-        self.space = space
-        self.fodder1_space = fodder1_space
-        self.fodder2_space = fodder2_space
-        self.fodder3_space = fodder3_space
-
-    def compute_space_used(self):
-        space_used = self.fodder1_space + self.fodder2_space + self.fodder3_space
-        return space_used
-
-    def compute_space_free(self):
-        space_free = self.space - self.space_used
-        return space_free
-
-
-# koszt przechowywania
-class StorageCost:
-    def __init__(self, cost: float, days: int, day_cost: int):
-        self.cost = cost
-        self.days = days
-        self.day_cost = day_cost
-
-    def compute_storage_cost(self):
-        cost = self.day_cost * self.days
-        return cost
 
 
 

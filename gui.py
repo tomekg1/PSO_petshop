@@ -313,7 +313,6 @@ class MyWindow(QMainWindow):  # dziedzicze z klasy sluzacej do tworzenia okna gl
         lib.create_new_fodder(protein, fat, carbohydrates, posmin, posmax)
         self.listwidget_fodders.addItem(f'{self.fodd_idx} fodder:  protein={protein},  fat={fat},  carbohydrates={carbohydrates}')
         self.fodd_idx += 1
-        print(lib.fodders)
 
     def update_index(self):
         self.listwidget_fodders.clear()
@@ -339,7 +338,7 @@ class PlotCanvas(FigureCanvas):
         self.plot1()
 
     def plot1(self):
-        y = main.cost_changes
+        y = []
         self.ax = self.figure.add_subplot(111)
         self.ax.set_ylabel('Total cost')
         self.ax.set_xlabel('Iterations')

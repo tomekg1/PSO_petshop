@@ -47,10 +47,7 @@ fodder5 = Fodder(protein=10, fat=20, carbohydrates=15, price=price5)
 
 fodders = [fodder1, fodder2, fodder3, fodder4, fodder5]
 
-# pojemność magazynu do składowania karmy, ogólna pojemność to 30kg i następnie po 10kg na rodzaj karmy
-space = Warehouse(space=30, fodder1_space=10, fodder2_space=10, fodder3_space=10)
-
-# minimalne makroskladniki potrzebne ndziennie
+# minimalne makroskladniki potrzebne dziennie
 
 macro_need_per_day = 0
 for i in animals:
